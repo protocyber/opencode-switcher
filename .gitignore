@@ -1,0 +1,16 @@
+# OpenCode Credentials - NEVER COMMIT!
+accounts.json
+backups/
+*.backup
+*.bak
+auth.json
+
+# Temporary files
+*.tmp
+.*.swp
+*~
+
+# Allow project files
+!README.md
+!switch.sh
+!.gitignore
