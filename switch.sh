@@ -475,7 +475,7 @@ interactive_menu() {
     list_accounts
     
     echo -e "Select account to switch to, or:"
-    echo -e "  ${CYAN}[l]${RESET} List    ${CYAN}[a]${RESET} Active   ${CYAN}[d]${RESET} Delete"
+    echo -e "  ${CYAN}[a]${RESET} Add     ${CYAN}[s]${RESET} Show Active   ${CYAN}[d]${RESET} Delete"
     echo -e "  ${CYAN}[e]${RESET} Edit    ${CYAN}[h]${RESET} Help     ${CYAN}[q]${RESET} Quit"
     echo ""
     read -p "Your choice: " choice
@@ -488,10 +488,55 @@ interactive_menu() {
         echo ""
         read -p "Press Enter to continue..."
         ;;
-      l|L)
-        # Already showing list, just continue
-        ;;
       a|A)
+        echo ""
+        # Get available providers
+        local providers=$(get_providers)
+        local provider_array=()
+        
+        # Build provider array
+        while IFS= read -r prov; do
+          provider_array+=("$prov")
+        done <<< "$providers"
+        
+        # Check if we have any providers
+        if [[ ${#provider_array[@]} -eq 0 ]]; then
+          echo -e "${RED}✗${RESET} No providers configured in accounts.json"
+          read -p "Press Enter to continue..."
+          continue
+        fi
+        
+        # If only one provider, use it automatically
+        if [[ ${#provider_array[@]} -eq 1 ]]; then
+          local selected_provider="${provider_array[0]}"
+          echo -e "${CYAN}Provider: ${selected_provider}${RESET}"
+          echo ""
+        else
+          # Show available providers
+          echo -e "${CYAN}Available providers:${RESET}"
+          for i in "${!provider_array[@]}"; do
+            echo -e "  [$i] ${provider_array[$i]}"
+          done
+          echo ""
+          read -p "Select provider: " prov_choice
+          
+          # Validate provider choice
+          if [[ "$prov_choice" =~ ^[0-9]+$ ]] && [[ $prov_choice -ge 0 ]] && [[ $prov_choice -lt ${#provider_array[@]} ]]; then
+            local selected_provider="${provider_array[$prov_choice]}"
+            echo ""
+          else
+            echo -e "${RED}✗${RESET} Invalid provider selection"
+            read -p "Press Enter to continue..."
+            continue
+          fi
+        fi
+        
+        # Call add_current_account with selected provider
+        add_current_account "$selected_provider"
+        echo ""
+        read -p "Press Enter to continue..."
+        ;;
+      s|S)
         echo ""
         show_active
         echo ""
@@ -535,36 +580,34 @@ interactive_menu() {
 # ============================================
 
 show_help() {
-  cat << EOF
-${BOLD}OpenCode Multi-Account Switcher${RESET}
-
-${BOLD}USAGE:${RESET}
-  oc-switch                           Interactive menu
-  oc-switch list                      List all accounts
-  oc-switch switch <provider> <index> Switch to account
-  oc-switch active [provider]         Show active account(s)
-  oc-switch add <provider>            Add current credential
-  oc-switch delete <provider> <index> Delete an account
-  oc-switch edit                      Edit accounts.json
-  oc-switch help                      Show this help
-
-${BOLD}EXAMPLES:${RESET}
-  oc-switch list
-  oc-switch switch github-copilot 1
-  oc-switch active
-  oc-switch add github-copilot
-  oc-switch delete github-copilot 2
-
-${BOLD}FILES:${RESET}
-  Config:  $ACCOUNTS_FILE
-  Auth:    $AUTH_FILE
-  Backups: $BACKUP_DIR
-
-${BOLD}BACKUP RETENTION:${RESET}
-  Keeps last $BACKUP_RETENTION backups automatically
-
-For more information, see: README.md
-EOF
+  echo -e "${BOLD}OpenCode Multi-Account Switcher${RESET}"
+  echo ""
+  echo -e "${BOLD}USAGE:${RESET}"
+  echo "  oc-switch                           Interactive menu"
+  echo "  oc-switch list                      List all accounts"
+  echo "  oc-switch switch <provider> <index> Switch to account"
+  echo "  oc-switch active [provider]         Show active account(s)"
+  echo "  oc-switch add <provider>            Add current credential"
+  echo "  oc-switch delete <provider> <index> Delete an account"
+  echo "  oc-switch edit                      Edit accounts.json"
+  echo "  oc-switch help                      Show this help"
+  echo ""
+  echo -e "${BOLD}EXAMPLES:${RESET}"
+  echo "  oc-switch list"
+  echo "  oc-switch switch github-copilot 1"
+  echo "  oc-switch active"
+  echo "  oc-switch add github-copilot"
+  echo "  oc-switch delete github-copilot 2"
+  echo ""
+  echo -e "${BOLD}FILES:${RESET}"
+  echo "  Config:  $ACCOUNTS_FILE"
+  echo "  Auth:    $AUTH_FILE"
+  echo "  Backups: $BACKUP_DIR"
+  echo ""
+  echo -e "${BOLD}BACKUP RETENTION:${RESET}"
+  echo "  Keeps last $BACKUP_RETENTION backups automatically"
+  echo ""
+  echo "For more information, see: README.md"
 }
 
 # ============================================
