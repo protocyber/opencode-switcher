@@ -52,11 +52,9 @@ sudo pacman -S jq
 
 ### Installation
 
-> **Note:** Replace `YOUR-USERNAME` with your actual GitHub username after publishing the repository.
-
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR-USERNAME/opencode-switcher.git
+git clone https://github.com/protocyber/opencode-switcher.git
 cd opencode-switcher
 
 # Make the script executable
